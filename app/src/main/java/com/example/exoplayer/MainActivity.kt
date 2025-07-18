@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -40,22 +41,6 @@ class MainActivity : AppCompatActivity() {
     )
     val TAG = "VIDEO_PLAYER_TAG"
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-//        enableEdgeToEdge()
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        playerview = binding.exoPlayer
-        seekBar = binding.seekbar
-
-
-        Log.d(TAG, "Calling initPLayer")
-        initPlayer()
-        Log.d(TAG, "Calling setUpContols")
-//        setUpControls()
-    }
-
 
     private fun initPlayer() {
         exoplayer = ExoPlayer.Builder(this).build()
@@ -81,11 +66,52 @@ class MainActivity : AppCompatActivity() {
                 updatePlayPasueIcon(isPlaying)
             }
         })
+        exoplayer.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_READY -> {
+                        Log.d(TAG, "Player is READY — duration: ${exoplayer.duration}")
+                        seekBar.max = exoplayer.duration.toInt()
+                    }
+                    Player.STATE_BUFFERING -> Log.d(TAG, "Player BUFFERING")
+                    Player.STATE_ENDED -> Log.d(TAG, "Player ENDED")
+                    Player.STATE_IDLE -> Log.d(TAG, "Player IDLE")
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                Log.d(TAG, "onIsPlayingChanged: $isPlaying")
+                updatePlayPasueIcon(isPlaying)
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.e(TAG, "Playback ERROR: ${error.message}", error)
+            }
+        })
+
         Log.d(TAG, "Player Listener Added")
 
         startSeekBarUpdater()
         Log.d(TAG, "seekBarUpdater Called")
     }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+//        enableEdgeToEdge()
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        playerview = binding.exoPlayer
+        seekBar = binding.seekbar
+
+
+        Log.d(TAG, "Calling initPLayer")
+        initPlayer()
+        Log.d(TAG, "Calling setUpContols")
+        setUpControls()
+    }
+
+
 
     private fun setUpControls() {
         binding.playBtn.setOnClickListener {
@@ -108,6 +134,14 @@ class MainActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(p0: SeekBar?) {}
             override fun onStartTrackingTouch(p0: SeekBar?) {}
         })
+
+        binding.nextBtn.setOnClickListener {
+            exoplayer.seekToNext()
+        }
+
+        binding.prevBtn.setOnClickListener {
+            exoplayer.seekToPrevious()
+        }
     }
 
     private fun startSeekBarUpdater() {
@@ -132,6 +166,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         exoplayer.playWhenReady=true
+        exoplayer.play()
     }
 
     override fun onResume() {
