@@ -17,7 +17,9 @@
         android:theme="@style/Theme.Exoplayer">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:configChanges="orientation|keyboard|layoutDirection|screenSize">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
